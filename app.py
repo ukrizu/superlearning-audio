@@ -5,47 +5,33 @@ import os
 import tempfile
 from openai import OpenAI
 import hashlib
-import base64
 
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def get_flag_img(code, size=20):
-    """Get base64 encoded flag image for inline display"""
-    flag_path = f"static/flags/{code}.png"
-    if os.path.exists(flag_path):
-        with open(flag_path, "rb") as f:
-            img_bytes = f.read()
-            img_b64 = base64.b64encode(img_bytes).decode()
-            return f'<img src="data:image/png;base64,{img_b64}" width="{size}" style="vertical-align: middle; margin-right: 5px;">'
-    return ""
-
 NATIVE_LANGUAGES = {
-    "Čeština": {"code": "cs", "flag": "cz"},
-    "English": {"code": "en", "flag": "gb"}
+    "Čeština": {"code": "cs"},
+    "English": {"code": "en"}
 }
 
 FOREIGN_LANGUAGES = {
     "de": {
-        "code": "de", 
-        "flag": "de",
+        "code": "de",
         "names": {
             "Čeština": "Němčina",
             "English": "German"
         }
     },
     "es": {
-        "code": "es", 
-        "flag": "es",
+        "code": "es",
         "names": {
             "Čeština": "Španělština",
             "English": "Spanish"
         }
     },
     "fr": {
-        "code": "fr", 
-        "flag": "fr",
+        "code": "fr",
         "names": {
             "Čeština": "Francouzština",
             "English": "French"
@@ -173,15 +159,13 @@ with st.sidebar:
     
     st.subheader(t("languages"))
     
-    # Native language selection with flag
-    st.markdown(f"{get_flag_img(NATIVE_LANGUAGES[st.session_state.get('ui_language', 'Čeština')]['flag'], 24)} **{t('native_lang_label')}**", unsafe_allow_html=True)
+    # Native language selection
     native_lang = st.selectbox(
         t("native_lang_label"),
         options=list(NATIVE_LANGUAGES.keys()),
         index=list(NATIVE_LANGUAGES.keys()).index("Čeština"),
         help=t("native_lang_help"),
-        key="native_lang_select",
-        label_visibility="collapsed"
+        key="native_lang_select"
     )
     
     # Update UI language when native language changes
@@ -189,18 +173,15 @@ with st.sidebar:
         st.session_state.ui_language = native_lang
         st.rerun()
     
-    # Foreign language selection with flag
-    st.markdown(f"{get_flag_img(FOREIGN_LANGUAGES.get(st.session_state.get('selected_foreign_lang', 'de'), {}).get('flag', 'de'), 24)} **{t('foreign_lang_label')}**", unsafe_allow_html=True)
+    # Foreign language selection
     foreign_lang_code = st.selectbox(
         t("foreign_lang_label"),
         options=list(FOREIGN_LANGUAGES.keys()),
         format_func=lambda x: get_foreign_lang_name(x),
         index=0,
         help=t("foreign_lang_help"),
-        key="foreign_lang_select",
-        label_visibility="collapsed"
+        key="foreign_lang_select"
     )
-    st.session_state.selected_foreign_lang = foreign_lang_code
     
     st.markdown("---")
     st.subheader(t("playback_speed"))
@@ -354,17 +335,13 @@ def parse_file(uploaded_file, native_lang, foreign_lang_name):
         foreign_only = lines
         return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang_name), True
 
-# Title with flag
-current_lang = st.session_state.get('ui_language', 'Čeština')
-current_flag = NATIVE_LANGUAGES.get(current_lang, {}).get('flag', 'cz')
-st.markdown(f"# {t('title')} {get_flag_img(current_flag, 32)}", unsafe_allow_html=True)
+# Title
+st.title(t('title'))
 st.write(t("subtitle"))
 
 col1, col2 = st.columns([2, 1])
 
 with col2:
-    format_info_html = t("format_info", get_flag_img(NATIVE_LANGUAGES[native_lang]['flag'], 16), get_flag_img(FOREIGN_LANGUAGES[foreign_lang_code]['flag'], 16))
-    
     st.markdown(f"""
     ### {t("file_format")}
     
@@ -386,8 +363,8 @@ with col2:
     
     {t("delimiter_warning")}
     
-    {format_info_html}
-    """, unsafe_allow_html=True)
+    {t("format_info", native_lang, get_foreign_lang_name(foreign_lang_code))}
+    """)
 
 with col1:
     uploaded_files = st.file_uploader(
@@ -443,25 +420,17 @@ if uploaded_files:
             st.write(t("preview_subtitle"))
             
             for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences[:20], 1):
-                # Display flags as headers
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.markdown(f"{get_flag_img(NATIVE_LANGUAGES[native_lang]['flag'], 16)} #{i}", unsafe_allow_html=True)
-                with col_b:
-                    st.markdown(f"{get_flag_img(FOREIGN_LANGUAGES[foreign_lang_code]['flag'], 16)} #{i}", unsafe_allow_html=True)
-                
-                # Input fields
                 col_a, col_b = st.columns(2)
                 with col_a:
                     st.text_input(
-                        f"#{i}",
+                        f"{native_lang} #{i}",
                         value=native_text,
                         key=f"native_{i}",
                         label_visibility="collapsed"
                     )
                 with col_b:
                     st.text_input(
-                        f"#{i}",
+                        f"{get_foreign_lang_name(foreign_lang_code)} #{i}",
                         value=foreign_text,
                         key=f"foreign_{i}",
                         disabled=True,
@@ -509,5 +478,4 @@ if uploaded_files:
                     st.error(t("error_generating", e))
 
 st.markdown("---")
-audio_format_text = t("audio_format", get_flag_img(NATIVE_LANGUAGES[native_lang]['flag'], 16), native_speedup, get_flag_img(FOREIGN_LANGUAGES[foreign_lang_code]['flag'], 16), foreign_speedup, pause_duration)
-st.markdown(f"<small>{audio_format_text}</small>", unsafe_allow_html=True)
+st.caption(t("audio_format", native_lang, native_speedup, get_foreign_lang_name(foreign_lang_code), foreign_speedup, pause_duration))

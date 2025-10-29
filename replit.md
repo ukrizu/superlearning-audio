@@ -25,15 +25,8 @@ Preferred communication style: Simple, everyday language.
    - Interface automatically translates to Czech or English based on native language selection
    - All UI elements, messages, and labels localized
    - Foreign language names localized to match native language
-4. **Enhanced UX**: 
-   - Custom flag images extracted from European flags source
-   - Flags displayed as actual PNG images (Czech, British, German, Spanish, French)
-   - Language flag displayed in page title (32px)
-   - Flags in sidebar language selectors (24px)
-   - Language names (not flags) displayed in speed sliders for clarity
-   - Flags in translation preview and format info (16px)
-   - Minimal text labels - primarily flag-based navigation
-5. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
+   - Clean text-only interface without flags or country code abbreviations
+4. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
 
 ### October 29, 2025 - Enhanced Feature Set
 1. **Delimiter Support**: Auto-detection of pipe (|) and semicolon (;) delimiters with validation to prevent multiple delimiters on the same line
