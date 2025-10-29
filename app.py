@@ -6,6 +6,11 @@ import tempfile
 from openai import OpenAI
 import hashlib
 import base64
+import time
+
+from dotenv import load_dotenv
+load_dotenv()
+
 
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
@@ -95,11 +100,11 @@ TRANSLATIONS = {
         "preview_title": "📝 Náhled a úprava překladů",
         "preview_subtitle": "Můžete upravit překlady před generováním audia:",
         "showing_first": "Zobrazení prvních 20 z {} dvojic. Všechny dvojice budou zahrnuty do audia.",
-        "generate_button": "🎵 Generovat audio",
-        "generating": "Generování audio souboru...",
+        "generate_button": "🎵 Generovat nahrávku",
+        "generating": "Generování nahrávky...",
         "translating_progress": "Překlad {}/{}: {}...",
-        "generating_progress": "Generování audia {}/{}: {}...",
-        "success": "🎉 Audio úspěšně vygenerováno!",
+        "generating_progress": "Generování nahrávky {}/{}: {}...",
+        "success": "🎉 Nahrávka úspěšně vygenerována!",
         "download_button": "⬇️ Stáhnout MP3",
         "download_text_button": "📄 Stáhnout textový soubor",
         "error_empty": "Soubor je prázdný",
@@ -110,7 +115,7 @@ TRANSLATIONS = {
         "detected_phrases": "Zjištěno {} frází pouze v jazyce {}",
         "audio_format": "Formát audia: {} ({}x) → {} ({}x) → {} ms pauza",
         "translation_failed": "Překlad selhal pro: {}",
-        "error_generating": "Chyba při generování audia: {}"
+        "error_generating": "Chyba při generování nahrávky: {}"
     },
     "English": {
         "title": "🎧 Superlearning Audio Generator",
@@ -294,38 +299,74 @@ def translate_text(texts, source_lang, target_lang):
 def generate_audio(sentences, output_path, pause_ms, native_speed, foreign_speed, native_code, foreign_code):
     """Generate combined MP3 from language pairs."""
     final_audio = AudioSegment.silent(0)
-    
+
     progress_bar = st.progress(0)
     status_text = st.empty()
-    
+
+    # Fix for incorrect flag/lang mapping
+    if foreign_code == "gb": 
+        foreign_code = "en"
+
     for i, (native_text, foreign_text) in enumerate(sentences, 1):
+        foreign_text = foreign_text.encode("utf-8", "ignore").decode("utf-8").strip()
+        native_text = native_text.encode("utf-8", "ignore").decode("utf-8").strip()
+        foreign_text = foreign_text.replace("¿", "").replace("¡", "")
+
+        if not foreign_text:
+            continue
+
         status_text.text(t("generating_progress", i, len(sentences), foreign_text[:50]))
-        
-        # Generate native language audio (plays first, at higher speed)
-        native_tts = gTTS(text=native_text, lang=native_code)
-        native_path = os.path.join(tempfile.gettempdir(), f"native_{i}.mp3")
-        native_tts.save(native_path)
-        native_audio = AudioSegment.from_mp3(native_path).speedup(playback_speed=native_speed)
-        
-        # Generate foreign language audio (plays second, reference)
-        foreign_tts = gTTS(text=foreign_text, lang=foreign_code)
-        foreign_path = os.path.join(tempfile.gettempdir(), f"foreign_{i}.mp3")
-        foreign_tts.save(foreign_path)
-        foreign_audio = AudioSegment.from_mp3(foreign_path).speedup(playback_speed=foreign_speed)
-        
-        # Combine: Native (fast) → Foreign (reference) → Pause
+
+        try:
+            native_tts = gTTS(text=native_text, lang=native_code)
+            native_path = os.path.join(tempfile.gettempdir(), f"native_{i}.mp3")
+            native_tts.save(native_path)
+            if not wait_for_file(native_path, timeout=5):
+                st.warning(f"⚠️ Timeout: {native_path} was not created in time.")
+                continue
+            native_audio = AudioSegment.from_mp3(native_path)
+            if native_audio.duration_seconds > 0.3 and native_speed != 1:
+                native_audio = native_audio.speedup(playback_speed=native_speed)
+        except Exception as e:
+            st.warning(f"❗ Native audio failed for '{native_text[:50]}': {e}")
+            continue
+
+        try:
+            foreign_tts = gTTS(text=foreign_text, lang=foreign_code)
+            foreign_path = os.path.join(tempfile.gettempdir(), f"foreign_{i}.mp3")
+            foreign_tts.save(foreign_path)
+            if not wait_for_file(foreign_path, timeout=5):
+                st.warning(f"⚠️ Timeout: {foreign_path} was not created in time.")
+                continue
+            foreign_audio = AudioSegment.from_mp3(foreign_path)
+            if foreign_audio.duration_seconds > 0.3 and foreign_speed != 1:
+                foreign_audio = foreign_audio.speedup(playback_speed=foreign_speed)
+        except Exception as e:
+            st.warning(f"❗ Foreign audio failed for '{foreign_text[:50]}': {e}")
+            continue
+
         final_audio += native_audio + foreign_audio + AudioSegment.silent(pause_ms)
-        
-        # Cleanup
+
+        progress_bar.progress(i / len(sentences))
+
         os.remove(native_path)
         os.remove(foreign_path)
-        
-        progress_bar.progress(i / len(sentences))
-    
+
     progress_bar.empty()
     status_text.empty()
-    
     final_audio.export(output_path, format="mp3")
+
+def wait_for_file(path: str, timeout: float = 5.0, interval: float = 0.05) -> bool:
+    """
+    Waits until file exists and is non-empty.
+    Returns True if ready, False if timeout exceeded.
+    """
+    start = time.time()
+    while time.time() - start < timeout:
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            return True
+        time.sleep(interval)
+    return False
 
 def parse_file(uploaded_file, native_lang, foreign_lang_name):
     """Parse uploaded file and detect format."""
