@@ -10,14 +10,18 @@ import hashlib
 import base64
 import time
 import imageio_ffmpeg
-
+from pydub import utils
 from dotenv import load_dotenv
 load_dotenv()
 
 os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
 
-# Tell pydub where ffmpeg is
+# Force pydub to use ffmpeg from imageio-ffmpeg for all internal calls
 ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+utils.get_prober_name = lambda: ffmpeg_path
+utils.get_encoder_name = lambda: ffmpeg_path
+utils.get_player_name = lambda: ffmpeg_path
+
 os.environ["FFMPEG_BINARY"] = ffmpeg_path
 os.environ["FFPROBE_BINARY"] = ffmpeg_path
 
