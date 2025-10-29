@@ -1,4 +1,3 @@
-import subprocess
 import streamlit as st
 
 from gtts import gTTS
@@ -10,39 +9,14 @@ import hashlib
 import base64
 import time
 import imageio_ffmpeg
-from pydub import utils
 from dotenv import load_dotenv
 load_dotenv()
 
 os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
 
-# --- Fix for Streamlit Cloud ---
-ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
-print(f"[INIT] Using ffmpeg binary: {ffmpeg_path}")
-
-# Explicitly register the ffmpeg binary for all tools
-os.environ["PATH"] = os.path.dirname(ffmpeg_path) + os.pathsep + os.environ["PATH"]
-os.environ["FFMPEG_BINARY"] = ffmpeg_path
-os.environ["FFPROBE_BINARY"] = ffmpeg_path
-
-# Patch pydub internal helpers
-utils.get_encoder_name = lambda: ffmpeg_path
-utils.get_player_name = lambda: ffmpeg_path
-utils.get_prober_name = lambda: ffmpeg_path
-
 from pydub import AudioSegment
 
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
-
-# vytvoř falešný symlink, aby pydub našel "ffprobe"
-if not os.path.exists("/usr/bin/ffprobe"):
-    os.system(f"ln -s {ffmpeg_path} /usr/bin/ffprobe")
-
-try:
-    out = subprocess.check_output([ffmpeg_path, "-version"]).decode().split('\n')[0]
-    st.text(f"✅ FFmpeg OK: {out}")
-except Exception as e:
-    st.error(f"❌ FFmpeg error: {e}")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
