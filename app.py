@@ -11,20 +11,20 @@ st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧",
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 NATIVE_LANGUAGES = {
-    "Czech": {"code": "cs", "flag": "🇨🇿"},
+    "Čeština": {"code": "cs", "flag": "🇨🇿"},
     "English": {"code": "en", "flag": "🇬🇧"}
 }
 
 FOREIGN_LANGUAGES = {
-    "German": {"code": "de", "flag": "🇩🇪"},
-    "Spanish": {"code": "es", "flag": "🇪🇸"},
-    "French": {"code": "fr", "flag": "🇫🇷"}
+    "Deutsch": {"code": "de", "flag": "🇩🇪"},
+    "Español": {"code": "es", "flag": "🇪🇸"},
+    "Français": {"code": "fr", "flag": "🇫🇷"}
 }
 
 # Translations for the entire UI
 TRANSLATIONS = {
-    "Czech": {
-        "title": "🎧 Generátor audio pro superlearning",
+    "Čeština": {
+        "title": "🎧 Generátor nahrávek pro superlearning",
         "subtitle": "Nahrajte textové soubory pro vytvoření audio s rozloženým opakováním pro výuku jazyků.",
         "settings": "⚙️ Nastavení",
         "languages": "🌍 Jazyky",
@@ -44,7 +44,7 @@ TRANSLATIONS = {
         "file_format": "📄 Formát souboru",
         "pairs_format": "**Jazykové dvojice** (použijte `|` nebo `;`):",
         "foreign_only_format": "**Pouze cizí jazyk** (automatický překlad):",
-        "supported_delimiters": "Podporované oddělovače: `|` nebo `;` pouze",
+        "supported_delimiters": "Podporované oddělovače: | nebo ;",
         "delimiter_warning": "⚠️ Používejte pouze jeden typ oddělovače na soubor",
         "format_info": "ℹ️ Formát: První sloupec = {}, Druhý sloupec = {}",
         "upload_label": "Nahrajte soubor(y) s frázemi (.txt)",
@@ -135,7 +135,7 @@ with st.sidebar:
         t("native_lang_label"),
         options=list(NATIVE_LANGUAGES.keys()),
         format_func=lambda x: f"{NATIVE_LANGUAGES[x]['flag']} {x}",
-        index=0,
+        index=list(NATIVE_LANGUAGES.keys()).index("Čeština"),
         help=t("native_lang_help"),
         key="native_lang_select"
     )
