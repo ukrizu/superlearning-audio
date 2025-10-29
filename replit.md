@@ -13,14 +13,18 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### October 29, 2025 - Multi-Language Support & Enhanced Controls
-1. **Language Selection**: Choose any combination of Czech, Spanish, and German
-   - Native language (learning target, plays faster)
-   - Foreign language (reference, customizable speed)
+1. **Language Selection**: 
+   - Native languages (learning): Czech, English
+   - Foreign languages (reference): German, Spanish, French
+   - Native language plays faster, foreign language provides reference
 2. **Independent Speed Controls**:
    - Native language: 1.0-1.5x speed (default 1.15x)
    - Foreign language: 0.8-1.2x speed (default 1.0x)
-3. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
-4. **Language-agnostic translation** - supports any language pair combination
+3. **Internationalization**: Complete UI translation
+   - Interface automatically translates to Czech or English based on native language selection
+   - All UI elements, messages, and labels localized
+4. **Enhanced UX**: Flag emojis in language dropdowns
+5. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
 
 ### October 29, 2025 - Enhanced Feature Set
 1. **Delimiter Support**: Auto-detection of pipe (|) and semicolon (;) delimiters with validation to prevent multiple delimiters on the same line
@@ -57,9 +61,9 @@ Preferred communication style: Simple, everyday language.
 4. All segments concatenated into single MP3 file
 
 **Supported Languages:**
-- Czech (cs)
-- Spanish (es)
-- German (de)
+- **Native (Learning)**: Czech, English
+- **Foreign (Reference)**: German, Spanish, French
+- gTTS language codes: cs, en, de, es, fr
 
 **Pros:** Free, no API quotas, cross-platform compatibility, multi-language support  
 **Cons:** Requires ffmpeg dependency, limited voice customization
@@ -75,10 +79,13 @@ Preferred communication style: Simple, everyday language.
 - Translation results are editable before audio generation
 
 **Supported Translation Pairs:**
-- Spanish ↔ Czech
-- Spanish ↔ German
 - Czech ↔ German
-- Any combination of the supported languages
+- Czech ↔ Spanish  
+- Czech ↔ French
+- English ↔ German
+- English ↔ Spanish
+- English ↔ French
+- Any combination of native (Czech, English) and foreign (German, Spanish, French) languages
 
 **Pros:** High translation quality, handles context and idioms well, supports multiple language pairs  
 **Cons:** Requires API key and incurs costs, needs internet connectivity
@@ -159,19 +166,21 @@ Preferred communication style: Simple, everyday language.
 ### Configuration
 - Environment variables: `OPENAI_API_KEY` (required for translation functionality)
 - Configurable settings (via sidebar):
-  - Native language selection (Czech, Spanish, German)
-  - Foreign language selection (Czech, Spanish, German)
+  - Native language selection (Czech, English) - also controls UI language
+  - Foreign language selection (German, Spanish, French)
   - Native language speed: 1.0-1.5x (default: 1.15x)
   - Foreign language speed: 0.8-1.2x (default: 1.0x)
   - Pause duration: 1000-5000ms (default: 3200ms)
+- UI Language: Automatically set based on native language selection (Czech or English)
 
 ## Feature Documentation
 
 ### Language Selection
-- Choose native language (the language you're learning)
-- Choose foreign language (the language you already know as reference)
-- System prevents selecting the same language for both
-- All UI elements update dynamically based on language selection
+- Choose native language from Czech or English (the language you're learning)
+  - This also sets the UI language for the entire application
+- Choose foreign language from German, Spanish, or French (the language you already know as reference)
+- Flag emojis displayed in language dropdowns for easy identification
+- All UI elements and messages automatically translate when native language changes
 
 ### File Upload
 - Accepts .txt files with UTF-8 encoding

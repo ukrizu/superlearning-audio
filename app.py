@@ -10,68 +10,184 @@ st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧",
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-LANGUAGE_OPTIONS = {
+NATIVE_LANGUAGES = {
     "Czech": {"code": "cs", "flag": "🇨🇿"},
-    "Spanish": {"code": "es", "flag": "🇪🇸"},
-    "German": {"code": "de", "flag": "🇩🇪"}
+    "English": {"code": "en", "flag": "🇬🇧"}
 }
 
+FOREIGN_LANGUAGES = {
+    "German": {"code": "de", "flag": "🇩🇪"},
+    "Spanish": {"code": "es", "flag": "🇪🇸"},
+    "French": {"code": "fr", "flag": "🇫🇷"}
+}
+
+# Translations for the entire UI
+TRANSLATIONS = {
+    "Czech": {
+        "title": "🎧 Generátor audio pro superlearning",
+        "subtitle": "Nahrajte textové soubory pro vytvoření audio s rozloženým opakováním pro výuku jazyků.",
+        "settings": "⚙️ Nastavení",
+        "languages": "🌍 Jazyky",
+        "native_lang_label": "Rodný jazyk (přehrává se rychleji)",
+        "native_lang_help": "Jazyk, který se učíte - přehrává se vyšší rychlostí",
+        "foreign_lang_label": "Cizí jazyk (reference)",
+        "foreign_lang_help": "Jazyk, který již znáte - přehrává se normální rychlostí",
+        "playback_speed": "🎚️ Rychlost přehrávání",
+        "native_speed_label": "rychlost přehrávání",
+        "native_speed_help": "Násobitel rychlosti pro audio v jazyce {} (1.0 = normální rychlost)",
+        "foreign_speed_label": "rychlost přehrávání",
+        "foreign_speed_help": "Násobitel rychlosti pro audio v jazyce {} (1.0 = normální rychlost)",
+        "timing": "⏸️ Časování",
+        "pause_label": "Pauza mezi dvojicemi (ms)",
+        "pause_help": "Délka ticha mezi jazykovými dvojicemi",
+        "tip": "💡 Tip: Upravte nastavení před generováním audia",
+        "file_format": "📄 Formát souboru",
+        "pairs_format": "**Jazykové dvojice** (použijte `|` nebo `;`):",
+        "foreign_only_format": "**Pouze cizí jazyk** (automatický překlad):",
+        "supported_delimiters": "Podporované oddělovače: `|` nebo `;` pouze",
+        "delimiter_warning": "⚠️ Používejte pouze jeden typ oddělovače na soubor",
+        "format_info": "ℹ️ Formát: První sloupec = {}, Druhý sloupec = {}",
+        "upload_label": "Nahrajte soubor(y) s frázemi (.txt)",
+        "batch_processing": "📦 Zpracování {} souborů v dávkovém režimu",
+        "translating": "Překlad {} frází z jazyka {} do jazyka {}...",
+        "total_ready": "✅ Celkem: {} dvojic frází připraveno",
+        "preview_title": "📝 Náhled a úprava překladů",
+        "preview_subtitle": "Můžete upravit překlady do jazyka {} před generováním audia:",
+        "showing_first": "Zobrazení prvních 20 z {} dvojic. Všechny dvojice budou zahrnuty do audia.",
+        "generate_button": "🎵 Generovat audio",
+        "generating": "Generování audio souboru...",
+        "translating_progress": "Překlad {}/{}: {}...",
+        "generating_progress": "Generování audia {}/{}: {}...",
+        "success": "🎉 Audio úspěšně vygenerováno!",
+        "download_button": "⬇️ Stáhnout MP3",
+        "error_empty": "Soubor je prázdný",
+        "error_multiple_delimiters": "Chyba: Nalezeno více oddělovačů (| a ;) na stejném řádku. Použijte prosím pouze jeden typ oddělovače.",
+        "error_multiple_on_line": "Chyba: Nalezeno více oddělovačů na řádku: {}",
+        "error_invalid_format": "Neplatný formát na řádku: {}",
+        "detected_pairs": "Zjištěno {} dvojic {}-{} (oddělovač: {})",
+        "detected_phrases": "Zjištěno {} frází pouze v jazyce {}",
+        "audio_format": "Formát audia: {} ({}x) → {} ({}x) → {} ms pauza",
+        "translation_failed": "Překlad selhal pro: {}",
+        "error_generating": "Chyba při generování audia: {}"
+    },
+    "English": {
+        "title": "🎧 Superlearning Audio Generator",
+        "subtitle": "Upload text files to generate spaced repetition audio for language learning.",
+        "settings": "⚙️ Settings",
+        "languages": "🌍 Languages",
+        "native_lang_label": "Native language (plays faster)",
+        "native_lang_help": "The language you're learning - plays at higher speed",
+        "foreign_lang_label": "Foreign language (reference)",
+        "foreign_lang_help": "The language you already know - plays at normal speed",
+        "playback_speed": "🎚️ Playback Speed",
+        "native_speed_label": "playback speed",
+        "native_speed_help": "Speed multiplier for {} audio (1.0 = normal speed)",
+        "foreign_speed_label": "playback speed",
+        "foreign_speed_help": "Speed multiplier for {} audio (1.0 = normal speed)",
+        "timing": "⏸️ Timing",
+        "pause_label": "Pause between pairs (ms)",
+        "pause_help": "Duration of silence between language pairs",
+        "tip": "💡 Tip: Adjust settings before generating audio",
+        "file_format": "📄 File Format",
+        "pairs_format": "**Language pairs** (use `|` or `;`):",
+        "foreign_only_format": "**Foreign language only** (auto-translate):",
+        "supported_delimiters": "Supported delimiters: `|` or `;` only",
+        "delimiter_warning": "⚠️ Use only one delimiter type per file",
+        "format_info": "ℹ️ Format: First column = {}, Second column = {}",
+        "upload_label": "Upload your phrases file(s) (.txt)",
+        "batch_processing": "📦 Processing {} files in batch mode",
+        "translating": "Translating {} {} phrases to {}...",
+        "total_ready": "✅ Total: {} phrase pairs ready",
+        "preview_title": "📝 Preview & Edit Translations",
+        "preview_subtitle": "You can edit the {} translations before generating audio:",
+        "showing_first": "Showing first 20 of {} pairs. All pairs will be included in audio.",
+        "generate_button": "🎵 Generate Audio",
+        "generating": "Generating audio file...",
+        "translating_progress": "Translating {}/{}: {}...",
+        "generating_progress": "Generating audio {}/{}: {}...",
+        "success": "🎉 Audio generated successfully!",
+        "download_button": "⬇️ Download MP3",
+        "error_empty": "File is empty",
+        "error_multiple_delimiters": "Error: Multiple delimiters (| and ;) found on the same line. Please use only one delimiter type.",
+        "error_multiple_on_line": "Error: Multiple delimiters found on line: {}",
+        "error_invalid_format": "Invalid format in line: {}",
+        "detected_pairs": "Detected {} {}-{} pairs (delimiter: {})",
+        "detected_phrases": "Detected {} {}-only phrases",
+        "audio_format": "Audio format: {} ({}x) → {} ({}x) → {}ms pause",
+        "translation_failed": "Translation failed for: {}",
+        "error_generating": "Error generating audio: {}"
+    }
+}
+
+def t(key, *args):
+    """Get translation for current language"""
+    lang = st.session_state.get('ui_language', 'English')
+    text = TRANSLATIONS[lang].get(key, TRANSLATIONS['English'][key])
+    if args:
+        return text.format(*args)
+    return text
+
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header(t("settings"))
     
-    st.subheader("🌍 Languages")
+    st.subheader(t("languages"))
     native_lang = st.selectbox(
-        "Native language (plays faster)",
-        options=list(LANGUAGE_OPTIONS.keys()),
+        t("native_lang_label"),
+        options=list(NATIVE_LANGUAGES.keys()),
+        format_func=lambda x: f"{NATIVE_LANGUAGES[x]['flag']} {x}",
         index=0,
-        help="The language you're learning - plays at higher speed"
+        help=t("native_lang_help"),
+        key="native_lang_select"
     )
+    
+    # Update UI language when native language changes
+    if 'ui_language' not in st.session_state or st.session_state.ui_language != native_lang:
+        st.session_state.ui_language = native_lang
+        st.rerun()
     
     foreign_lang = st.selectbox(
-        "Foreign language (reference)",
-        options=list(LANGUAGE_OPTIONS.keys()),
-        index=1,
-        help="The language you already know - plays at normal speed"
+        t("foreign_lang_label"),
+        options=list(FOREIGN_LANGUAGES.keys()),
+        format_func=lambda x: f"{FOREIGN_LANGUAGES[x]['flag']} {x}",
+        index=0,
+        help=t("foreign_lang_help")
     )
     
-    if native_lang == foreign_lang:
-        st.warning("⚠️ Please select different languages")
-    
     st.markdown("---")
-    st.subheader("🎚️ Playback Speed")
+    st.subheader(t("playback_speed"))
     
     native_speedup = st.slider(
-        f"{native_lang} playback speed",
+        f"{NATIVE_LANGUAGES[native_lang]['flag']} {native_lang} {t('native_speed_label')}",
         min_value=1.0,
         max_value=1.5,
         value=1.15,
         step=0.05,
-        help=f"Speed multiplier for {native_lang} audio (1.0 = normal speed)"
+        help=t("native_speed_help", native_lang)
     )
     
     foreign_speedup = st.slider(
-        f"{foreign_lang} playback speed",
+        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {foreign_lang} {t('foreign_speed_label')}",
         min_value=0.8,
         max_value=1.2,
         value=1.0,
         step=0.05,
-        help=f"Speed multiplier for {foreign_lang} audio (1.0 = normal speed)"
+        help=t("foreign_speed_help", foreign_lang)
     )
     
     st.markdown("---")
-    st.subheader("⏸️ Timing")
+    st.subheader(t("timing"))
     
     pause_duration = st.slider(
-        "Pause between pairs (ms)",
+        t("pause_label"),
         min_value=1000,
         max_value=5000,
         value=3200,
         step=100,
-        help="Duration of silence between language pairs"
+        help=t("pause_help")
     )
     
     st.markdown("---")
-    st.caption("💡 Tip: Adjust settings before generating audio")
+    st.caption(t("tip"))
 
 def detect_delimiter(line):
     """Auto-detect delimiter in a line. Only supports | and ;"""
@@ -97,7 +213,7 @@ def translate_text(texts, source_lang, target_lang):
     status_text = st.empty()
     
     for i, text in enumerate(texts):
-        status_text.text(f"Translating {i+1}/{len(texts)}: {text[:50]}...")
+        status_text.text(t("translating_progress", i+1, len(texts), text[:50]))
         try:
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -109,7 +225,7 @@ def translate_text(texts, source_lang, target_lang):
             translation = (resp.choices[0].message.content or "").strip()
         except Exception as e:
             translation = f"[Translation error: {e}]"
-            st.warning(f"Translation failed for: {text}")
+            st.warning(t("translation_failed", text))
         translated.append(translation)
         progress_bar.progress((i + 1) / len(texts))
     
@@ -125,7 +241,7 @@ def generate_audio(sentences, output_path, pause_ms, native_speed, foreign_speed
     status_text = st.empty()
     
     for i, (native_text, foreign_text) in enumerate(sentences, 1):
-        status_text.text(f"Generating audio {i}/{len(sentences)}: {foreign_text[:50]}...")
+        status_text.text(t("generating_progress", i, len(sentences), foreign_text[:50]))
         
         # Generate native language audio (plays first, at higher speed)
         native_tts = gTTS(text=native_text, lang=native_code)
@@ -159,12 +275,12 @@ def parse_file(uploaded_file, native_lang, foreign_lang):
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     
     if not lines:
-        return None, "File is empty", None
+        return None, t("error_empty"), None
     
     delimiter = detect_delimiter(lines[0])
     
     if delimiter == "ERROR_MULTIPLE":
-        return None, "Error: Multiple delimiters (| and ;) found on the same line. Please use only one delimiter type.", None
+        return None, t("error_multiple_delimiters"), None
     
     if delimiter:
         delimiter_name = {'|': 'pipe', ';': 'semicolon'}.get(delimiter, delimiter)
@@ -173,60 +289,60 @@ def parse_file(uploaded_file, native_lang, foreign_lang):
             # Check for multiple delimiters on each line
             line_delimiter = detect_delimiter(l)
             if line_delimiter == "ERROR_MULTIPLE":
-                return None, f"Error: Multiple delimiters found on line: {l}", None
+                return None, t("error_multiple_on_line", l), None
             
             parts = [p.strip() for p in l.split(delimiter)]
             if len(parts) == 2 and parts[0] and parts[1]:
                 native_text, foreign_text = parts
                 sentences.append([native_text, foreign_text])
             else:
-                return None, f"Invalid format in line: {l}", None
-        return sentences, f"Detected {len(sentences)} {native_lang}-{foreign_lang} pairs (delimiter: {delimiter_name})", False
+                return None, t("error_invalid_format", l), None
+        return sentences, t("detected_pairs", len(sentences), native_lang, foreign_lang, delimiter_name), False
     else:
         # Foreign language only - needs translation
         foreign_only = lines
-        return foreign_only, f"Detected {len(foreign_only)} {foreign_lang}-only phrases", True
+        return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang), True
 
-st.title("🎧 Superlearning Audio Generator")
-st.write("Upload text files to generate spaced repetition audio for language learning.")
+st.title(t("title"))
+st.write(t("subtitle"))
 
 col1, col2 = st.columns([2, 1])
 
 with col2:
     st.markdown(f"""
-    ### 📄 File Format
+    ### {t("file_format")}
     
-    **Language pairs** (use `|` or `;`):
+    {t("pairs_format")}
     ```
     Dobrý den|Buenos días
     Guten Tag;Buenos días
     Děkuji|Gracias
     ```
     
-    **Foreign language only** (auto-translate):
+    {t("foreign_only_format")}
     ```
     Buenos días
     ¿Cómo estás?
     Gracias
     ```
     
-    Supported delimiters: `|` or `;` only
+    {t("supported_delimiters")}
     
-    ⚠️ Use only one delimiter type per file
+    {t("delimiter_warning")}
     
-    ℹ️ Format: First column = {native_lang}, Second column = {foreign_lang}
+    {t("format_info", native_lang, foreign_lang)}
     """)
 
 with col1:
     uploaded_files = st.file_uploader(
-        "Upload your phrases file(s) (.txt)", 
+        t("upload_label"), 
         type=["txt"],
         accept_multiple_files=True
     )
 
-if uploaded_files and native_lang != foreign_lang:
+if uploaded_files:
     if len(uploaded_files) > 1:
-        st.info(f"📦 Processing {len(uploaded_files)} files in batch mode")
+        st.info(t("batch_processing", len(uploaded_files)))
     
     all_sentences = []
     needs_translation = False
@@ -238,7 +354,7 @@ if uploaded_files and native_lang != foreign_lang:
         result, message, is_foreign_only = parse_file(uploaded_file, native_lang, foreign_lang)
         
         if result is None:
-            st.error(f"Error: {message}")
+            st.error(f"{message}")
             continue
         
         st.success(message)
@@ -250,13 +366,13 @@ if uploaded_files and native_lang != foreign_lang:
             all_sentences.extend(result)
     
     if needs_translation and foreign_only_texts:
-        st.info(f"Translating {len(foreign_only_texts)} {foreign_lang} phrases to {native_lang}...")
+        st.info(t("translating", len(foreign_only_texts), foreign_lang, native_lang))
         native_translations = translate_text(foreign_only_texts, foreign_lang, native_lang)
         translated_pairs = [[native, foreign] for native, foreign in zip(native_translations, foreign_only_texts)]
         all_sentences.extend(translated_pairs)
     
     if all_sentences:
-        st.success(f"✅ Total: {len(all_sentences)} phrase pairs ready")
+        st.success(t("total_ready", len(all_sentences)))
         
         content_hash = hashlib.md5(str(all_sentences).encode()).hexdigest()
         
@@ -267,21 +383,21 @@ if uploaded_files and native_lang != foreign_lang:
                 if isinstance(key, str) and (key.startswith('native_') or key.startswith('foreign_')):
                     del st.session_state[key]
         
-        with st.expander("📝 Preview & Edit Translations", expanded=False):
-            st.write(f"You can edit the {native_lang} translations before generating audio:")
+        with st.expander(t("preview_title"), expanded=False):
+            st.write(t("preview_subtitle", native_lang))
             
             for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences[:20], 1):
                 col_a, col_b = st.columns(2)
                 with col_a:
                     st.text_input(
-                        f"{LANGUAGE_OPTIONS[native_lang]['flag']} {native_lang} #{i}",
+                        f"{NATIVE_LANGUAGES[native_lang]['flag']} {native_lang} #{i}",
                         value=native_text,
                         key=f"native_{i}",
                         label_visibility="collapsed"
                     )
                 with col_b:
                     st.text_input(
-                        f"{LANGUAGE_OPTIONS[foreign_lang]['flag']} {foreign_lang} #{i}",
+                        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {foreign_lang} #{i}",
                         value=foreign_text,
                         key=f"foreign_{i}",
                         disabled=True,
@@ -289,15 +405,15 @@ if uploaded_files and native_lang != foreign_lang:
                     )
             
             if len(st.session_state.current_sentences) > 20:
-                st.info(f"Showing first 20 of {len(st.session_state.current_sentences)} pairs. All pairs will be included in audio.")
+                st.info(t("showing_first", len(st.session_state.current_sentences)))
         
         sentences_to_use = []
         for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences, 1):
             edited_native = st.session_state.get(f"native_{i}", native_text) if i <= 20 else native_text
             sentences_to_use.append([edited_native, foreign_text])
         
-        if st.button("🎵 Generate Audio", type="primary", use_container_width=True):
-            with st.spinner("Generating audio file..."):
+        if st.button(t("generate_button"), type="primary", use_container_width=True):
+            with st.spinner(t("generating")):
                 output_path = os.path.join(tempfile.gettempdir(), "superlearning_audio.mp3")
                 
                 try:
@@ -307,10 +423,10 @@ if uploaded_files and native_lang != foreign_lang:
                         pause_duration, 
                         native_speedup,
                         foreign_speedup,
-                        LANGUAGE_OPTIONS[native_lang]["code"],
-                        LANGUAGE_OPTIONS[foreign_lang]["code"]
+                        NATIVE_LANGUAGES[native_lang]["code"],
+                        FOREIGN_LANGUAGES[foreign_lang]["code"]
                     )
-                    st.success("🎉 Audio generated successfully!")
+                    st.success(t("success"))
                     
                     with open(output_path, "rb") as audio_file:
                         audio_bytes = audio_file.read()
@@ -318,7 +434,7 @@ if uploaded_files and native_lang != foreign_lang:
                     st.audio(audio_bytes, format="audio/mp3")
                     
                     st.download_button(
-                        label="⬇️ Download MP3",
+                        label=t("download_button"),
                         data=audio_bytes,
                         file_name=f"superlearning_{native_lang}_{foreign_lang}_{len(sentences_to_use)}_phrases.mp3",
                         mime="audio/mp3",
@@ -326,7 +442,7 @@ if uploaded_files and native_lang != foreign_lang:
                     )
                     
                 except Exception as e:
-                    st.error(f"Error generating audio: {e}")
+                    st.error(t("error_generating", e))
 
 st.markdown("---")
-st.caption(f"Audio format: {native_lang} ({native_speedup}x) → {foreign_lang} ({foreign_speedup}x) → {pause_duration}ms pause")
+st.caption(t("audio_format", native_lang, native_speedup, foreign_lang, foreign_speedup, pause_duration))
