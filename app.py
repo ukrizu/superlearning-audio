@@ -5,10 +5,21 @@ import os
 import tempfile
 from openai import OpenAI
 import hashlib
+import base64
 
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def get_flag_img(code, size=40):
+    """Get base64 encoded flag image for inline display"""
+    flag_path = f"static/flags/{code}.png"
+    if os.path.exists(flag_path):
+        with open(flag_path, "rb") as f:
+            img_bytes = f.read()
+            img_b64 = base64.b64encode(img_bytes).decode()
+            return f'<img src="data:image/png;base64,{img_b64}" height="{size}" style="vertical-align: middle; margin-left: 10px;">'
+    return ""
 
 NATIVE_LANGUAGES = {
     "Čeština": {"code": "cs"},
@@ -18,6 +29,7 @@ NATIVE_LANGUAGES = {
 FOREIGN_LANGUAGES = {
     "de": {
         "code": "de",
+        "flag": "de",
         "names": {
             "Čeština": "Němčina",
             "English": "German"
@@ -25,6 +37,7 @@ FOREIGN_LANGUAGES = {
     },
     "es": {
         "code": "es",
+        "flag": "es",
         "names": {
             "Čeština": "Španělština",
             "English": "Spanish"
@@ -32,6 +45,7 @@ FOREIGN_LANGUAGES = {
     },
     "fr": {
         "code": "fr",
+        "flag": "fr",
         "names": {
             "Čeština": "Francouzština",
             "English": "French"
@@ -46,14 +60,14 @@ TRANSLATIONS = {
         "subtitle": "Nahrajte textové soubory pro vytvoření audio s rozloženým opakováním pro výuku jazyků.",
         "settings": "⚙️ Nastavení",
         "languages": "🌍 Jazyky",
-        "native_lang_label": "Rodný jazyk (přehrává se rychleji)",
+        "native_lang_label": "Rodný jazyk",
         "native_lang_help": "Jazyk, který se učíte - přehrává se vyšší rychlostí",
-        "foreign_lang_label": "Cizí jazyk (reference)",
+        "foreign_lang_label": "Cizí jazyk",
         "foreign_lang_help": "Jazyk, který již znáte - přehrává se normální rychlostí",
         "playback_speed": "🎚️ Rychlost přehrávání",
-        "native_speed_label": "rychlost přehrávání",
+        "native_speed_label": "",
         "native_speed_help": "Násobitel rychlosti pro audio v jazyce {} (1.0 = normální rychlost)",
-        "foreign_speed_label": "rychlost přehrávání",
+        "foreign_speed_label": "",
         "foreign_speed_help": "Násobitel rychlosti pro audio v jazyce {} (1.0 = normální rychlost)",
         "timing": "⏸️ Časování",
         "pause_label": "Pauza mezi dvojicemi (ms)",
@@ -93,14 +107,14 @@ TRANSLATIONS = {
         "subtitle": "Upload text files to generate spaced repetition audio for language learning.",
         "settings": "⚙️ Settings",
         "languages": "🌍 Languages",
-        "native_lang_label": "Native language (plays faster)",
+        "native_lang_label": "Native language",
         "native_lang_help": "The language you're learning - plays at higher speed",
-        "foreign_lang_label": "Foreign language (reference)",
+        "foreign_lang_label": "Foreign language",
         "foreign_lang_help": "The language you already know - plays at normal speed",
         "playback_speed": "🎚️ Playback Speed",
-        "native_speed_label": "playback speed",
+        "native_speed_label": "",
         "native_speed_help": "Speed multiplier for {} audio (1.0 = normal speed)",
-        "foreign_speed_label": "playback speed",
+        "foreign_speed_label": "",
         "foreign_speed_help": "Speed multiplier for {} audio (1.0 = normal speed)",
         "timing": "⏸️ Timing",
         "pause_label": "Pause between pairs (ms)",
@@ -188,7 +202,7 @@ with st.sidebar:
     
     # Native language speed slider
     native_speedup = st.slider(
-        f"{native_lang} {t('native_speed_label')}",
+        native_lang,
         min_value=1.0,
         max_value=1.5,
         value=1.15,
@@ -198,7 +212,7 @@ with st.sidebar:
     
     # Foreign language speed slider
     foreign_speedup = st.slider(
-        f"{get_foreign_lang_name(foreign_lang_code)} {t('foreign_speed_label')}",
+        get_foreign_lang_name(foreign_lang_code),
         min_value=0.8,
         max_value=1.2,
         value=1.0,
@@ -335,8 +349,9 @@ def parse_file(uploaded_file, native_lang, foreign_lang_name):
         foreign_only = lines
         return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang_name), True
 
-# Title
-st.title(t('title'))
+# Title with foreign language flag
+flag_html = get_flag_img(FOREIGN_LANGUAGES[foreign_lang_code]["flag"], size=30)
+st.markdown(f"# {t('title')}{flag_html}", unsafe_allow_html=True)
 st.write(t("subtitle"))
 
 col1, col2 = st.columns([2, 1])
