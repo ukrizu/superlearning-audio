@@ -1,0 +1,50 @@
+Prompt for Replit:
+Create a Python web app (Flask-based) with a simple frontend interface that allows users to upload a text file containing either:
+•	lines of Spanish–Czech pairs, separated by a delimiter (e.g. “|” or “;”),
+•	or just Spanish-only phrases (one per line).
+The app should:
+1.	Parse the uploaded file:
+o	Detect whether it contains one or two columns.
+o	If only Spanish is present, automatically translate the text to Czech using an AI translation API (you may use Google Translate API, DeepL, or OpenAI’s translation API).
+2.	Use the provided audio generation logic (below) to synthesize MP3 audio combining both languages:
+o	Czech first (slightly faster speed, e.g. 1.15×),
+o	Spanish next,
+o	a pause between each pair (3.2 seconds).
+3.	When generation is done, provide a button to download the resulting MP3 file.
+4.	Use a clean and minimal HTML interface:
+o	“Upload phrases file” input
+o	“Generate Audio” button
+o	“Download MP3” link (visible only after processing)
+5.	Implement everything in one Replit project with:
+o	requirements.txt
+o	main.py (Flask app)
+o	templates/index.html
+6.	Include the following script logic inside main.py, adapted so that sentences come from the uploaded file instead of being hardcoded:
+from gtts import gTTS
+from pydub import AudioSegment
+
+PAUSE = 3200
+SPEEDUP = 1.15
+
+def generate_audio(sentences, output_filename="output.mp3"):
+    final_audio = AudioSegment.silent(0)
+    for i, (cz, es) in enumerate(sentences, 1):
+        cz_tts = gTTS(text=cz, lang='cs')
+        cz_tts.save("cz.mp3")
+        cz_audio = AudioSegment.from_mp3("cz.mp3").speedup(playback_speed=SPEEDUP)
+
+        es_tts = gTTS(text=es, lang='es')
+        es_tts.save("es.mp3")
+        es_audio = AudioSegment.from_mp3("es.mp3")
+
+        pair = cz_audio + es_audio + AudioSegment.silent(PAUSE)
+        final_audio += pair
+
+    final_audio.export(output_filename, format="mp3")
+    return output_filename
+7.	Save the generated MP3 to a temporary folder and serve it to the user for download.
+8.	Handle errors gracefully (e.g. missing columns, translation errors, etc.).
+
+Other features
+•	Show a progress indicator during generation.
+

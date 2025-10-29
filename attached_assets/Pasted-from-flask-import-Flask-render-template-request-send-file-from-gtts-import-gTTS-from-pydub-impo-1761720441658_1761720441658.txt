@@ -1,0 +1,98 @@
+from flask import Flask, render_template, request, send_file
+from gtts import gTTS
+from pydub import AudioSegment
+import os
+import tempfile
+import openai
+
+app = Flask(__name__)
+
+# You can also set your key in Replit secrets as OPENAI_API_KEY
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+PAUSE = 3200
+SPEEDUP = 1.15
+
+
+def translate_to_czech(spanish_texts):
+    """Translate Spanish → Czech using OpenAI model."""
+    translated = []
+    for text in spanish_texts:
+        try:
+            resp = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "Translate the following Spanish text to Czech. Return only the translation."},
+                    {"role": "user", "content": text}
+                ],
+            )
+            cz = resp.choices[0].message.content.strip()
+        except Exception as e:
+            cz = f"[Translation error: {e}]"
+        translated.append(cz)
+    return translated
+
+
+def generate_audio(sentences, output_path):
+    """Generate combined MP3 from Czech–Spanish sentence pairs."""
+    final_audio = AudioSegment.silent(0)
+
+    for i, (cz, es) in enumerate(sentences, 1):
+        print(f"▶️ {i}. {cz} / {es}")
+
+        cz_tts = gTTS(text=cz, lang="cs")
+        cz_path = os.path.join(tempfile.gettempdir(), f"cz_{i}.mp3")
+        cz_tts.save(cz_path)
+        cz_audio = AudioSegment.from_mp3(cz_path).speedup(playback_speed=SPEEDUP)
+
+        es_tts = gTTS(text=es, lang="es")
+        es_path = os.path.join(tempfile.gettempdir(), f"es_{i}.mp3")
+        es_tts.save(es_path)
+        es_audio = AudioSegment.from_mp3(es_path)
+
+        final_audio += cz_audio + es_audio + AudioSegment.silent(PAUSE)
+
+        # Clean up temporary clips
+        os.remove(cz_path)
+        os.remove(es_path)
+
+    final_audio.export(output_path, format="mp3")
+
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file:
+            return render_template("index.html", error="Please upload a text file.")
+
+        # Save and read the uploaded file
+        text = file.read().decode("utf-8").strip()
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+        # Detect if Spanish-only or Czech–Spanish pairs
+        sentences = []
+        if "|" in lines[0] or ";" in lines[0]:
+            delimiter = "|" if "|" in lines[0] else ";"
+            for l in lines:
+                parts = [p.strip() for p in l.split(delimiter)]
+                if len(parts) == 2:
+                    cz, es = parts
+                    sentences.append((cz, es))
+        else:
+            # Only Spanish → translate
+            spanish_only = lines
+            czech = translate_to_czech(spanish_only)
+            sentences = list(zip(czech, spanish_only))
+
+        # Generate output
+        output_path = os.path.join(tempfile.gettempdir(), "spanish_audio.mp3")
+        generate_audio(sentences, output_path)
+
+        return send_file(output_path, as_attachment=True, download_name="spanish_audio.mp3")
+
+    return render_template("index.html")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
