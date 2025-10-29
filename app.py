@@ -50,6 +50,14 @@ FOREIGN_LANGUAGES = {
             "Čeština": "Francouzština",
             "English": "French"
         }
+    },
+    "en": {
+        "code": "en",
+        "flag": "gb",
+        "names": {
+            "Čeština": "Angličtina",
+            "English": "English"
+        }
     }
 }
 
