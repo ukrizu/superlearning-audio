@@ -1,6 +1,6 @@
 import streamlit as st
 from gtts import gTTS
-from pydub import AudioSegment
+
 import os
 import tempfile
 from openai import OpenAI
@@ -13,10 +13,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
+
 # Tell pydub where ffmpeg is
 ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 os.environ["FFMPEG_BINARY"] = ffmpeg_path
 os.environ["FFPROBE_BINARY"] = ffmpeg_path
+
+from pydub import AudioSegment
 
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
