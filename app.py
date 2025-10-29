@@ -74,8 +74,15 @@ with st.sidebar:
     st.caption("💡 Tip: Adjust settings before generating audio")
 
 def detect_delimiter(line):
-    """Auto-detect delimiter in a line."""
-    delimiters = ['\t', '|', ';', ',']
+    """Auto-detect delimiter in a line. Only supports | and ;"""
+    delimiters = ['|', ';']
+    
+    # Check for multiple delimiters on the same line
+    found_delimiters = [d for d in delimiters if d in line]
+    if len(found_delimiters) > 1:
+        return "ERROR_MULTIPLE"
+    
+    # Check for single delimiter
     for delimiter in delimiters:
         if delimiter in line:
             parts = [p.strip() for p in line.split(delimiter)]
@@ -156,10 +163,18 @@ def parse_file(uploaded_file, native_lang, foreign_lang):
     
     delimiter = detect_delimiter(lines[0])
     
+    if delimiter == "ERROR_MULTIPLE":
+        return None, "Error: Multiple delimiters (| and ;) found on the same line. Please use only one delimiter type.", None
+    
     if delimiter:
-        delimiter_name = {'\t': 'tab', '|': 'pipe', ';': 'semicolon', ',': 'comma'}.get(delimiter, delimiter)
+        delimiter_name = {'|': 'pipe', ';': 'semicolon'}.get(delimiter, delimiter)
         sentences = []
         for l in lines:
+            # Check for multiple delimiters on each line
+            line_delimiter = detect_delimiter(l)
+            if line_delimiter == "ERROR_MULTIPLE":
+                return None, f"Error: Multiple delimiters found on line: {l}", None
+            
             parts = [p.strip() for p in l.split(delimiter)]
             if len(parts) == 2 and parts[0] and parts[1]:
                 native_text, foreign_text = parts
@@ -181,11 +196,11 @@ with col2:
     st.markdown(f"""
     ### 📄 File Format
     
-    **Language pairs** (any delimiter):
+    **Language pairs** (use `|` or `;`):
     ```
     Dobrý den|Buenos días
     Guten Tag;Buenos días
-    Dobrý den,Guten Tag
+    Děkuji|Gracias
     ```
     
     **Foreign language only** (auto-translate):
@@ -195,7 +210,9 @@ with col2:
     Gracias
     ```
     
-    Supported delimiters: `|` `;` `,` `tab`
+    Supported delimiters: `|` or `;` only
+    
+    ⚠️ Use only one delimiter type per file
     
     ℹ️ Format: First column = {native_lang}, Second column = {foreign_lang}
     """)

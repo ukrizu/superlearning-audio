@@ -23,7 +23,7 @@ Preferred communication style: Simple, everyday language.
 4. **Language-agnostic translation** - supports any language pair combination
 
 ### October 29, 2025 - Enhanced Feature Set
-1. **Multiple Delimiter Support**: Auto-detection of pipe (|), semicolon (;), comma (,), and tab delimiters
+1. **Delimiter Support**: Auto-detection of pipe (|) and semicolon (;) delimiters with validation to prevent multiple delimiters on the same line
 2. **Batch Processing**: Upload and process multiple files simultaneously
 3. **Customizable Settings Sidebar**:
    - Adjustable pause duration (1000-5000ms, default: 3200ms)
@@ -84,21 +84,27 @@ Preferred communication style: Simple, everyday language.
 **Cons:** Requires API key and incurs costs, needs internet connectivity
 
 ### File Format Detection
-**Decision:** Auto-detection with multi-delimiter support  
-**Rationale:** Maximizes compatibility with various input formats while maintaining simplicity.
+**Decision:** Auto-detection with pipe (|) and semicolon (;) delimiter support  
+**Rationale:** Focused delimiter support ensures consistent parsing and prevents ambiguity from commas in natural language text.
 
 **Supported Formats:**
-1. **Language pairs**: Any line containing tab, pipe, semicolon, or comma delimiter
+1. **Language pairs**: Lines containing pipe (|) or semicolon (;) delimiter
    - Example: `Dobrý den|Buenos días` (Czech-Spanish)
    - Example: `Guten Tag;Dobrý den` (German-Czech)
+   - Only one delimiter type allowed per file
 2. **Foreign language only**: Lines without delimiters trigger automatic translation
    - Example: `Buenos días` (Spanish → will be translated to selected native language)
 
 **Detection Logic:**
-- Checks first line for presence of delimiters
+- Checks first line for presence of | or ; delimiter
 - Validates that delimiter produces exactly 2 non-empty parts
+- Reports error if multiple delimiter types (| and ;) found on the same line
 - Falls back to foreign-language-only mode if no delimiter found
 - First column is always native language, second is foreign language
+
+**Validation:**
+- Multiple delimiters on the same line trigger an error
+- Each line must consistently use the same delimiter as detected in the first line
 
 ### State Management
 **Decision:** Content-based session state with MD5 hashing  
