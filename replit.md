@@ -14,16 +14,21 @@ Preferred communication style: Simple, everyday language.
 
 ### October 29, 2025 - Multi-Language Support & Enhanced Controls
 1. **Language Selection**: 
-   - Native languages (learning): Czech, English
-   - Foreign languages (reference): German, Spanish, French
+   - Native languages (learning): Czech (Čeština), English
+   - Foreign languages (reference): German (Deutsch/Němčina), Spanish (Español/Španělština), French (Français/Francouzština)
    - Native language plays faster, foreign language provides reference
+   - Foreign language names displayed in selected native language (e.g., "Němčina" when Czech is selected, "German" when English is selected)
 2. **Independent Speed Controls**:
    - Native language: 1.0-1.5x speed (default 1.15x)
    - Foreign language: 0.8-1.2x speed (default 1.0x)
 3. **Internationalization**: Complete UI translation
    - Interface automatically translates to Czech or English based on native language selection
    - All UI elements, messages, and labels localized
-4. **Enhanced UX**: Flag emojis in language dropdowns
+   - Foreign language names localized to match native language
+4. **Enhanced UX**: 
+   - Flag emojis in language dropdowns (without country code abbreviations)
+   - Language flag displayed in page title
+   - Minimal text labels - primarily flag-based navigation
 5. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
 
 ### October 29, 2025 - Enhanced Feature Set

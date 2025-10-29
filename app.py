@@ -16,9 +16,30 @@ NATIVE_LANGUAGES = {
 }
 
 FOREIGN_LANGUAGES = {
-    "Deutsch": {"code": "de", "flag": "🇩🇪"},
-    "Español": {"code": "es", "flag": "🇪🇸"},
-    "Français": {"code": "fr", "flag": "🇫🇷"}
+    "de": {
+        "code": "de", 
+        "flag": "🇩🇪",
+        "names": {
+            "Čeština": "Němčina",
+            "English": "German"
+        }
+    },
+    "es": {
+        "code": "es", 
+        "flag": "🇪🇸",
+        "names": {
+            "Čeština": "Španělština",
+            "English": "Spanish"
+        }
+    },
+    "fr": {
+        "code": "fr", 
+        "flag": "🇫🇷",
+        "names": {
+            "Čeština": "Francouzština",
+            "English": "French"
+        }
+    }
 }
 
 # Translations for the entire UI
@@ -127,6 +148,11 @@ def t(key, *args):
         return text.format(*args)
     return text
 
+def get_foreign_lang_name(lang_code):
+    """Get foreign language name in current UI language"""
+    ui_lang = st.session_state.get('ui_language', 'Čeština')
+    return FOREIGN_LANGUAGES[lang_code]['names'][ui_lang]
+
 # Initialize default language if not set
 if 'ui_language' not in st.session_state:
     st.session_state.ui_language = 'Čeština'
@@ -149,12 +175,13 @@ with st.sidebar:
         st.session_state.ui_language = native_lang
         st.rerun()
     
-    foreign_lang = st.selectbox(
+    foreign_lang_code = st.selectbox(
         t("foreign_lang_label"),
         options=list(FOREIGN_LANGUAGES.keys()),
-        format_func=lambda x: f"{FOREIGN_LANGUAGES[x]['flag']} {x}",
+        format_func=lambda x: f"{FOREIGN_LANGUAGES[x]['flag']} {get_foreign_lang_name(x)}",
         index=0,
-        help=t("foreign_lang_help")
+        help=t("foreign_lang_help"),
+        key="foreign_lang_select"
     )
     
     st.markdown("---")
@@ -170,12 +197,12 @@ with st.sidebar:
     )
     
     foreign_speedup = st.slider(
-        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {t('foreign_speed_label')}",
+        f"{FOREIGN_LANGUAGES[foreign_lang_code]['flag']} {t('foreign_speed_label')}",
         min_value=0.8,
         max_value=1.2,
         value=1.0,
         step=0.05,
-        help=t("foreign_speed_help", foreign_lang)
+        help=t("foreign_speed_help", get_foreign_lang_name(foreign_lang_code))
     )
     
     st.markdown("---")
@@ -273,7 +300,7 @@ def generate_audio(sentences, output_path, pause_ms, native_speed, foreign_speed
     
     final_audio.export(output_path, format="mp3")
 
-def parse_file(uploaded_file, native_lang, foreign_lang):
+def parse_file(uploaded_file, native_lang, foreign_lang_name):
     """Parse uploaded file and detect format."""
     text = uploaded_file.read().decode("utf-8").strip()
     lines = [l.strip() for l in text.splitlines() if l.strip()]
@@ -301,11 +328,11 @@ def parse_file(uploaded_file, native_lang, foreign_lang):
                 sentences.append([native_text, foreign_text])
             else:
                 return None, t("error_invalid_format", l), None
-        return sentences, t("detected_pairs", len(sentences), native_lang, foreign_lang, delimiter_name), False
+        return sentences, t("detected_pairs", len(sentences), native_lang, foreign_lang_name, delimiter_name), False
     else:
         # Foreign language only - needs translation
         foreign_only = lines
-        return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang), True
+        return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang_name), True
 
 # Get current language flag for title
 current_lang = st.session_state.get('ui_language', 'Čeština')
@@ -338,7 +365,7 @@ with col2:
     
     {t("delimiter_warning")}
     
-    {t("format_info", NATIVE_LANGUAGES[native_lang]['flag'], FOREIGN_LANGUAGES[foreign_lang]['flag'])}
+    {t("format_info", NATIVE_LANGUAGES[native_lang]['flag'], FOREIGN_LANGUAGES[foreign_lang_code]['flag'])}
     """)
 
 with col1:
@@ -359,7 +386,7 @@ if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 {uploaded_file.name}")
         
-        result, message, is_foreign_only = parse_file(uploaded_file, native_lang, foreign_lang)
+        result, message, is_foreign_only = parse_file(uploaded_file, native_lang, get_foreign_lang_name(foreign_lang_code))
         
         if result is None:
             st.error(f"{message}")
@@ -374,8 +401,8 @@ if uploaded_files:
             all_sentences.extend(result)
     
     if needs_translation and foreign_only_texts:
-        st.info(t("translating", len(foreign_only_texts), foreign_lang, native_lang))
-        native_translations = translate_text(foreign_only_texts, foreign_lang, native_lang)
+        st.info(t("translating", len(foreign_only_texts), get_foreign_lang_name(foreign_lang_code), native_lang))
+        native_translations = translate_text(foreign_only_texts, get_foreign_lang_name(foreign_lang_code), native_lang)
         translated_pairs = [[native, foreign] for native, foreign in zip(native_translations, foreign_only_texts)]
         all_sentences.extend(translated_pairs)
     
@@ -405,7 +432,7 @@ if uploaded_files:
                     )
                 with col_b:
                     st.text_input(
-                        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} #{i}",
+                        f"{FOREIGN_LANGUAGES[foreign_lang_code]['flag']} #{i}",
                         value=foreign_text,
                         key=f"foreign_{i}",
                         disabled=True,
@@ -432,7 +459,7 @@ if uploaded_files:
                         native_speedup,
                         foreign_speedup,
                         NATIVE_LANGUAGES[native_lang]["code"],
-                        FOREIGN_LANGUAGES[foreign_lang]["code"]
+                        FOREIGN_LANGUAGES[foreign_lang_code]["code"]
                     )
                     st.success(t("success"))
                     
@@ -444,7 +471,7 @@ if uploaded_files:
                     st.download_button(
                         label=t("download_button"),
                         data=audio_bytes,
-                        file_name=f"superlearning_{native_lang}_{foreign_lang}_{len(sentences_to_use)}_phrases.mp3",
+                        file_name=f"superlearning_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.mp3",
                         mime="audio/mp3",
                         use_container_width=True
                     )
@@ -453,4 +480,4 @@ if uploaded_files:
                     st.error(t("error_generating", e))
 
 st.markdown("---")
-st.caption(t("audio_format", NATIVE_LANGUAGES[native_lang]['flag'], native_speedup, FOREIGN_LANGUAGES[foreign_lang]['flag'], foreign_speedup, pause_duration))
+st.caption(t("audio_format", NATIVE_LANGUAGES[native_lang]['flag'], native_speedup, FOREIGN_LANGUAGES[foreign_lang_code]['flag'], foreign_speedup, pause_duration))
