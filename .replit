@@ -1,0 +1,12 @@
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["ffmpeg-full", "ffmpeg"]
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["streamlit", "run", "app.py", "--server.port", "5000"]
+
+[agent]
+integrations = ["python_openai_ai_integrations:1.0.0"]
