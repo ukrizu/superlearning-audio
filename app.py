@@ -86,7 +86,8 @@ TRANSLATIONS = {
         "foreign_only_format": "**Pouze cizí jazyk** (automatický překlad):",
         "supported_delimiters": "Podporované oddělovače: | nebo ;",
         "delimiter_warning": "⚠️ Používejte pouze jeden typ oddělovače na soubor",
-        "format_info": "ℹ️ Formát: První sloupec = {} (rodný jazyk), Druhý sloupec = {} (cizí jazyk)",
+        "format_info": "ℹ️ **DŮLEŽITÉ:** První sloupec = {} (rodný jazyk), Druhý sloupec = {} (cizí jazyk)",
+        "language_warning": "⚠️ **POZOR:** Ujistěte se, že vybraný cizí jazyk v nastavení odpovídá jazyku ve druhém sloupci vašeho souboru!",
         "upload_label": "Nahrajte soubor(y) s frázemi (.txt)",
         "batch_processing": "📦 Zpracování {} souborů v dávkovém režimu",
         "translating": "Překlad {} frází z jazyka {} do jazyka {}...",
@@ -133,7 +134,8 @@ TRANSLATIONS = {
         "foreign_only_format": "**Foreign language only** (auto-translate):",
         "supported_delimiters": "Supported delimiters: `|` or `;` only",
         "delimiter_warning": "⚠️ Use only one delimiter type per file",
-        "format_info": "ℹ️ Format: First column = {} (native language), Second column = {} (foreign language)",
+        "format_info": "ℹ️ **IMPORTANT:** First column = {} (native language), Second column = {} (foreign language)",
+        "language_warning": "⚠️ **ATTENTION:** Make sure the selected foreign language in settings matches the language in the second column of your file!",
         "upload_label": "Upload your phrases file(s) (.txt)",
         "batch_processing": "📦 Processing {} files in batch mode",
         "translating": "Translating {} {} phrases to {}...",
@@ -387,6 +389,8 @@ with col2:
     {t("delimiter_warning")}
     
     {t("format_info", native_lang, get_foreign_lang_name(foreign_lang_code))}
+    
+    {t("language_warning")}
     """)
 
 with col1:
