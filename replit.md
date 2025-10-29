@@ -26,8 +26,12 @@ Preferred communication style: Simple, everyday language.
    - All UI elements, messages, and labels localized
    - Foreign language names localized to match native language
 4. **Enhanced UX**: 
-   - Flag emojis in language dropdowns (without country code abbreviations)
-   - Language flag displayed in page title
+   - Custom flag images extracted from European flags source
+   - Flags displayed as actual PNG images (Czech, British, German, Spanish, French)
+   - Language flag displayed in page title (32px)
+   - Flags in sidebar language selectors (24px)
+   - Flags in speed sliders (20px)
+   - Flags in translation preview and format info (16px)
    - Minimal text labels - primarily flag-based navigation
 5. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
 
