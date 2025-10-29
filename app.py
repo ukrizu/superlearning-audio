@@ -7,11 +7,16 @@ from openai import OpenAI
 import hashlib
 import base64
 import time
+import imageio_ffmpeg
 
 from dotenv import load_dotenv
 load_dotenv()
 
 os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
+# Tell pydub where ffmpeg is
+os.environ["FFMPEG_BINARY"] = imageio_ffmpeg.get_ffmpeg_exe()
+os.environ["FFPROBE_BINARY"] = imageio_ffmpeg.get_ffprobe_exe()
+
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
