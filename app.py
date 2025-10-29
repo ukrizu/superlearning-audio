@@ -46,13 +46,13 @@ TRANSLATIONS = {
         "foreign_only_format": "**Pouze cizí jazyk** (automatický překlad):",
         "supported_delimiters": "Podporované oddělovače: | nebo ;",
         "delimiter_warning": "⚠️ Používejte pouze jeden typ oddělovače na soubor",
-        "format_info": "ℹ️ Formát: První sloupec = {}, Druhý sloupec = {}",
+        "format_info": "ℹ️ Formát: První sloupec = {} (rodný jazyk), Druhý sloupec = {} (cizí jazyk)",
         "upload_label": "Nahrajte soubor(y) s frázemi (.txt)",
         "batch_processing": "📦 Zpracování {} souborů v dávkovém režimu",
         "translating": "Překlad {} frází z jazyka {} do jazyka {}...",
         "total_ready": "✅ Celkem: {} dvojic frází připraveno",
         "preview_title": "📝 Náhled a úprava překladů",
-        "preview_subtitle": "Můžete upravit překlady do jazyka {} před generováním audia:",
+        "preview_subtitle": "Můžete upravit překlady před generováním audia:",
         "showing_first": "Zobrazení prvních 20 z {} dvojic. Všechny dvojice budou zahrnuty do audia.",
         "generate_button": "🎵 Generovat audio",
         "generating": "Generování audio souboru...",
@@ -93,13 +93,13 @@ TRANSLATIONS = {
         "foreign_only_format": "**Foreign language only** (auto-translate):",
         "supported_delimiters": "Supported delimiters: `|` or `;` only",
         "delimiter_warning": "⚠️ Use only one delimiter type per file",
-        "format_info": "ℹ️ Format: First column = {}, Second column = {}",
+        "format_info": "ℹ️ Format: First column = {} (native language), Second column = {} (foreign language)",
         "upload_label": "Upload your phrases file(s) (.txt)",
         "batch_processing": "📦 Processing {} files in batch mode",
         "translating": "Translating {} {} phrases to {}...",
         "total_ready": "✅ Total: {} phrase pairs ready",
         "preview_title": "📝 Preview & Edit Translations",
-        "preview_subtitle": "You can edit the {} translations before generating audio:",
+        "preview_subtitle": "You can edit the translations before generating audio:",
         "showing_first": "Showing first 20 of {} pairs. All pairs will be included in audio.",
         "generate_button": "🎵 Generate Audio",
         "generating": "Generating audio file...",
@@ -121,11 +121,15 @@ TRANSLATIONS = {
 
 def t(key, *args):
     """Get translation for current language"""
-    lang = st.session_state.get('ui_language', 'English')
+    lang = st.session_state.get('ui_language', 'Čeština')
     text = TRANSLATIONS[lang].get(key, TRANSLATIONS['English'][key])
     if args:
         return text.format(*args)
     return text
+
+# Initialize default language if not set
+if 'ui_language' not in st.session_state:
+    st.session_state.ui_language = 'Čeština'
 
 with st.sidebar:
     st.header(t("settings"))
@@ -157,7 +161,7 @@ with st.sidebar:
     st.subheader(t("playback_speed"))
     
     native_speedup = st.slider(
-        f"{NATIVE_LANGUAGES[native_lang]['flag']} {native_lang} {t('native_speed_label')}",
+        f"{NATIVE_LANGUAGES[native_lang]['flag']} {t('native_speed_label')}",
         min_value=1.0,
         max_value=1.5,
         value=1.15,
@@ -166,7 +170,7 @@ with st.sidebar:
     )
     
     foreign_speedup = st.slider(
-        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {foreign_lang} {t('foreign_speed_label')}",
+        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {t('foreign_speed_label')}",
         min_value=0.8,
         max_value=1.2,
         value=1.0,
@@ -303,7 +307,11 @@ def parse_file(uploaded_file, native_lang, foreign_lang):
         foreign_only = lines
         return foreign_only, t("detected_phrases", len(foreign_only), foreign_lang), True
 
-st.title(t("title"))
+# Get current language flag for title
+current_lang = st.session_state.get('ui_language', 'Čeština')
+current_flag = NATIVE_LANGUAGES.get(current_lang, {}).get('flag', '🇨🇿')
+
+st.title(f"{t('title')} {current_flag}")
 st.write(t("subtitle"))
 
 col1, col2 = st.columns([2, 1])
@@ -330,7 +338,7 @@ with col2:
     
     {t("delimiter_warning")}
     
-    {t("format_info", native_lang, foreign_lang)}
+    {t("format_info", NATIVE_LANGUAGES[native_lang]['flag'], FOREIGN_LANGUAGES[foreign_lang]['flag'])}
     """)
 
 with col1:
@@ -384,20 +392,20 @@ if uploaded_files:
                     del st.session_state[key]
         
         with st.expander(t("preview_title"), expanded=False):
-            st.write(t("preview_subtitle", native_lang))
+            st.write(t("preview_subtitle"))
             
             for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences[:20], 1):
                 col_a, col_b = st.columns(2)
                 with col_a:
                     st.text_input(
-                        f"{NATIVE_LANGUAGES[native_lang]['flag']} {native_lang} #{i}",
+                        f"{NATIVE_LANGUAGES[native_lang]['flag']} #{i}",
                         value=native_text,
                         key=f"native_{i}",
                         label_visibility="collapsed"
                     )
                 with col_b:
                     st.text_input(
-                        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} {foreign_lang} #{i}",
+                        f"{FOREIGN_LANGUAGES[foreign_lang]['flag']} #{i}",
                         value=foreign_text,
                         key=f"foreign_{i}",
                         disabled=True,
@@ -445,4 +453,4 @@ if uploaded_files:
                     st.error(t("error_generating", e))
 
 st.markdown("---")
-st.caption(t("audio_format", native_lang, native_speedup, foreign_lang, foreign_speedup, pause_duration))
+st.caption(t("audio_format", NATIVE_LANGUAGES[native_lang]['flag'], native_speedup, FOREIGN_LANGUAGES[foreign_lang]['flag'], foreign_speedup, pause_duration))
