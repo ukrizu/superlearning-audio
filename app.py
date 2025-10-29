@@ -101,6 +101,7 @@ TRANSLATIONS = {
         "generating_progress": "Generování audia {}/{}: {}...",
         "success": "🎉 Audio úspěšně vygenerováno!",
         "download_button": "⬇️ Stáhnout MP3",
+        "download_text_button": "📄 Stáhnout textový soubor",
         "error_empty": "Soubor je prázdný",
         "error_multiple_delimiters": "Chyba: Nalezeno více oddělovačů (| a ;) na stejném řádku. Použijte prosím pouze jeden typ oddělovače.",
         "error_multiple_on_line": "Chyba: Nalezeno více oddělovačů na řádku: {}",
@@ -149,6 +150,7 @@ TRANSLATIONS = {
         "generating_progress": "Generating audio {}/{}: {}...",
         "success": "🎉 Audio generated successfully!",
         "download_button": "⬇️ Download MP3",
+        "download_text_button": "📄 Download text file",
         "error_empty": "File is empty",
         "error_multiple_delimiters": "Error: Multiple delimiters (| and ;) found on the same line. Please use only one delimiter type.",
         "error_multiple_on_line": "Error: Multiple delimiters found on line: {}",
@@ -460,7 +462,6 @@ if uploaded_files:
                         f"{get_foreign_lang_name(foreign_lang_code)} #{i}",
                         value=foreign_text,
                         key=f"foreign_{i}",
-                        disabled=True,
                         label_visibility="collapsed"
                     )
             
@@ -470,7 +471,8 @@ if uploaded_files:
         sentences_to_use = []
         for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences, 1):
             edited_native = st.session_state.get(f"native_{i}", native_text) if i <= 20 else native_text
-            sentences_to_use.append([edited_native, foreign_text])
+            edited_foreign = st.session_state.get(f"foreign_{i}", foreign_text) if i <= 20 else foreign_text
+            sentences_to_use.append([edited_native, edited_foreign])
         
         if st.button(t("generate_button"), type="primary", use_container_width=True):
             with st.spinner(t("generating")):
@@ -493,13 +495,27 @@ if uploaded_files:
                     
                     st.audio(audio_bytes, format="audio/mp3")
                     
-                    st.download_button(
-                        label=t("download_button"),
-                        data=audio_bytes,
-                        file_name=f"superlearning_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.mp3",
-                        mime="audio/mp3",
-                        use_container_width=True
-                    )
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            label=t("download_button"),
+                            data=audio_bytes,
+                            file_name=f"superlearning_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.mp3",
+                            mime="audio/mp3",
+                            use_container_width=True
+                        )
+                    
+                    # Generate text file with edited phrases
+                    text_content = "\n".join([f"{native}|{foreign}" for native, foreign in sentences_to_use])
+                    
+                    with col2:
+                        st.download_button(
+                            label=t("download_text_button"),
+                            data=text_content.encode('utf-8'),
+                            file_name=f"edited_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
                     
                 except Exception as e:
                     st.error(t("error_generating", e))
