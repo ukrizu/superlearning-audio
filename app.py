@@ -206,27 +206,23 @@ with st.sidebar:
     st.subheader(t("playback_speed"))
     
     # Native language speed slider
-    st.markdown(f"{get_flag_img(NATIVE_LANGUAGES[native_lang]['flag'], 20)} {t('native_speed_label')}", unsafe_allow_html=True)
     native_speedup = st.slider(
-        f"{t('native_speed_label')}",
+        f"{native_lang} {t('native_speed_label')}",
         min_value=1.0,
         max_value=1.5,
         value=1.15,
         step=0.05,
-        help=t("native_speed_help", native_lang),
-        label_visibility="collapsed"
+        help=t("native_speed_help", native_lang)
     )
     
     # Foreign language speed slider
-    st.markdown(f"{get_flag_img(FOREIGN_LANGUAGES[foreign_lang_code]['flag'], 20)} {t('foreign_speed_label')}", unsafe_allow_html=True)
     foreign_speedup = st.slider(
-        f"{t('foreign_speed_label')}",
+        f"{get_foreign_lang_name(foreign_lang_code)} {t('foreign_speed_label')}",
         min_value=0.8,
         max_value=1.2,
         value=1.0,
         step=0.05,
-        help=t("foreign_speed_help", get_foreign_lang_name(foreign_lang_code)),
-        label_visibility="collapsed"
+        help=t("foreign_speed_help", get_foreign_lang_name(foreign_lang_code))
     )
     
     st.markdown("---")

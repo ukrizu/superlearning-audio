@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
    - Flags displayed as actual PNG images (Czech, British, German, Spanish, French)
    - Language flag displayed in page title (32px)
    - Flags in sidebar language selectors (24px)
-   - Flags in speed sliders (20px)
+   - Language names (not flags) displayed in speed sliders for clarity
    - Flags in translation preview and format info (16px)
    - Minimal text labels - primarily flag-based navigation
 5. **Renamed to "Superlearning Audio Generator"** - reflecting broader language support
