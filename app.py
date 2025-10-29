@@ -16,14 +16,19 @@ load_dotenv()
 
 os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
 
-# Force pydub to use ffmpeg from imageio-ffmpeg for all internal calls
+# --- Fix for Streamlit Cloud ---
 ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
-utils.get_prober_name = lambda: ffmpeg_path
-utils.get_encoder_name = lambda: ffmpeg_path
-utils.get_player_name = lambda: ffmpeg_path
+print(f"[INIT] Using ffmpeg binary: {ffmpeg_path}")
 
+# Explicitly register the ffmpeg binary for all tools
+os.environ["PATH"] = os.path.dirname(ffmpeg_path) + os.pathsep + os.environ["PATH"]
 os.environ["FFMPEG_BINARY"] = ffmpeg_path
 os.environ["FFPROBE_BINARY"] = ffmpeg_path
+
+# Patch pydub internal helpers
+utils.get_encoder_name = lambda: ffmpeg_path
+utils.get_player_name = lambda: ffmpeg_path
+utils.get_prober_name = lambda: ffmpeg_path
 
 from pydub import AudioSegment
 
