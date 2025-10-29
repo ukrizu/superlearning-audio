@@ -204,7 +204,7 @@ with st.sidebar:
         t("foreign_lang_label"),
         options=list(FOREIGN_LANGUAGES.keys()),
         format_func=lambda x: get_foreign_lang_name(x),
-        index=0,
+        index=1,
         help=t("foreign_lang_help"),
         key="foreign_lang_select"
     )
