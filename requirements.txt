@@ -1,4 +1,0 @@
-streamlit
-gtts
-pydub
-openai
