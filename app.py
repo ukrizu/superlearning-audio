@@ -8,7 +8,7 @@ from openai import OpenAI
 import hashlib
 import base64
 import time
-import imageio_ffmpeg
+
 from dotenv import load_dotenv
 load_dotenv()
 
