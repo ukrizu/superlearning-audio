@@ -20,6 +20,35 @@ st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧",
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Authentication
+def check_authentication():
+    """Check if user is authenticated"""
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    
+    if not st.session_state.authenticated:
+        st.title("🔐 Přihlášení / Login")
+        
+        with st.form("login_form"):
+            username = st.text_input("Uživatelské jméno / Username")
+            password = st.text_input("Heslo / Password", type="password")
+            submit = st.form_submit_button("Přihlásit se / Login")
+            
+            if submit:
+                correct_username = os.environ.get("AUTH_USERNAME", "")
+                correct_password = os.environ.get("AUTH_PASSWORD", "")
+                
+                if username == correct_username and password == correct_password:
+                    st.session_state.authenticated = True
+                    st.success("✅ Přihlášení úspěšné! / Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Nesprávné přihlašovací údaje / Incorrect credentials")
+        
+        st.stop()
+
+# Check authentication before showing the main app
+check_authentication()
 def get_flag_img(code, size=40):
     """Get base64 encoded flag image for inline display"""
     flag_path = f"static/flags/{code}.png"
