@@ -11,7 +11,7 @@ import time
 from dotenv import load_dotenv
 load_dotenv()
 
-
+os.environ["STREAMLIT_DISABLE_WATCHDOG_WARNING"] = "true"
 st.set_page_config(page_title="Superlearning Audio Generator", page_icon="🎧", layout="wide")
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
