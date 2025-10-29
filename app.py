@@ -28,7 +28,7 @@ def translate_to_czech(spanish_texts):
                     {"role": "user", "content": text}
                 ],
             )
-            cz = resp.choices[0].message.content.strip()
+            cz = (resp.choices[0].message.content or "").strip()
         except Exception as e:
             cz = f"[Translation error: {e}]"
             st.warning(f"Translation failed for: {text}")
