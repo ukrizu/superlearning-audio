@@ -144,8 +144,8 @@ TRANSLATIONS = {
         "error_multiple_delimiters": "Chyba: Nalezeno více oddělovačů (| a ;) na stejném řádku. Použijte prosím pouze jeden typ oddělovače.",
         "error_multiple_on_line": "Chyba: Nalezeno více oddělovačů na řádku: {}",
         "error_invalid_format": "Neplatný formát na řádku: {}",
-        "detected_pairs": "Zjištěno {} dvojic {}-{} (oddělovač: {})",
-        "detected_phrases": "Zjištěno {} frází pouze v jazyce {}",
+        "detected_pairs": "Načteno {} dvojic {}-{}",
+        "detected_phrases": "Načteno {} frází pouze v jazyce {}",
         "audio_format": "Formát audia: {} ({}x) → {} ({}x) → {} ms pauza",
         "translation_failed": "Překlad selhal pro: {}",
         "error_generating": "Chyba při generování nahrávky: {}"
@@ -193,8 +193,8 @@ TRANSLATIONS = {
         "error_multiple_delimiters": "Error: Multiple delimiters (| and ;) found on the same line. Please use only one delimiter type.",
         "error_multiple_on_line": "Error: Multiple delimiters found on line: {}",
         "error_invalid_format": "Invalid format in line: {}",
-        "detected_pairs": "Detected {} {}-{} pairs (delimiter: {})",
-        "detected_phrases": "Detected {} {}-only phrases",
+        "detected_pairs": "Loaded {} {}-{} pairs",
+        "detected_phrases": "Loaded {} {}-only phrases",
         "audio_format": "Audio format: {} ({}x) → {} ({}x) → {}ms pause",
         "translation_failed": "Translation failed for: {}",
         "error_generating": "Error generating audio: {}"
@@ -415,7 +415,6 @@ def parse_file(uploaded_file, native_lang, foreign_lang_name):
         return None, t("error_multiple_delimiters"), None
     
     if delimiter:
-        delimiter_name = {'|': 'pipe', ';': 'semicolon'}.get(delimiter, delimiter)
         sentences = []
         for l in lines:
             # Check for multiple delimiters on each line
@@ -429,7 +428,7 @@ def parse_file(uploaded_file, native_lang, foreign_lang_name):
                 sentences.append([native_text, foreign_text])
             else:
                 return None, t("error_invalid_format", l), None
-        return sentences, t("detected_pairs", len(sentences), native_lang, foreign_lang_name, delimiter_name), False
+        return sentences, t("detected_pairs", len(sentences), native_lang, foreign_lang_name), False
     else:
         # Foreign language only - needs translation
         foreign_only = lines
@@ -515,9 +514,15 @@ if uploaded_files:
         if 'content_hash' not in st.session_state or st.session_state.content_hash != content_hash:
             st.session_state.content_hash = content_hash
             st.session_state.current_sentences = all_sentences.copy()
+            # Clear old edits and generated audio when new files are uploaded
             for key in list(st.session_state.keys()):
                 if isinstance(key, str) and (key.startswith('native_') or key.startswith('foreign_')):
                     del st.session_state[key]
+            # Clear previously generated audio
+            if 'generated_audio' in st.session_state:
+                del st.session_state['generated_audio']
+            if 'audio_filename' in st.session_state:
+                del st.session_state['audio_filename']
         
         with st.expander(t("preview_title"), expanded=False):
             st.write(t("preview_subtitle"))
@@ -548,7 +553,26 @@ if uploaded_files:
             edited_foreign = st.session_state.get(f"foreign_{i}", foreign_text) if i <= 20 else foreign_text
             sentences_to_use.append([edited_native, edited_foreign])
         
-        if st.button(t("generate_button"), type="primary", use_container_width=True):
+        # Generate text file content with edited phrases
+        text_content = "\n".join([f"{native}|{foreign}" for native, foreign in sentences_to_use])
+        
+        # Show buttons side by side
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            generate_clicked = st.button(t("generate_button"), type="primary", use_container_width=True)
+        
+        with col2:
+            st.download_button(
+                label=t("download_text_button"),
+                data=text_content.encode('utf-8'),
+                file_name=f"edited_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+        
+        # Generate audio when button is clicked
+        if generate_clicked:
             with st.spinner(t("generating")):
                 output_path = os.path.join(tempfile.gettempdir(), "superlearning_audio.mp3")
                 
@@ -562,37 +586,29 @@ if uploaded_files:
                         NATIVE_LANGUAGES[native_lang]["code"],
                         FOREIGN_LANGUAGES[foreign_lang_code]["code"]
                     )
-                    st.success(t("success"))
                     
                     with open(output_path, "rb") as audio_file:
                         audio_bytes = audio_file.read()
                     
-                    st.audio(audio_bytes, format="audio/mp3")
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.download_button(
-                            label=t("download_button"),
-                            data=audio_bytes,
-                            file_name=f"superlearning_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.mp3",
-                            mime="audio/mp3",
-                            use_container_width=True
-                        )
-                    
-                    # Generate text file with edited phrases
-                    text_content = "\n".join([f"{native}|{foreign}" for native, foreign in sentences_to_use])
-                    
-                    with col2:
-                        st.download_button(
-                            label=t("download_text_button"),
-                            data=text_content.encode('utf-8'),
-                            file_name=f"edited_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.txt",
-                            mime="text/plain",
-                            use_container_width=True
-                        )
+                    # Store audio in session state
+                    st.session_state.generated_audio = audio_bytes
+                    st.session_state.audio_filename = f"superlearning_{NATIVE_LANGUAGES[native_lang]['code']}_{FOREIGN_LANGUAGES[foreign_lang_code]['code']}_{len(sentences_to_use)}_phrases.mp3"
+                    st.success(t("success"))
                     
                 except Exception as e:
                     st.error(t("error_generating", e))
+        
+        # Display audio player and download button if audio has been generated
+        if 'generated_audio' in st.session_state and st.session_state.generated_audio:
+            st.audio(st.session_state.generated_audio, format="audio/mp3")
+            
+            st.download_button(
+                label=t("download_button"),
+                data=st.session_state.generated_audio,
+                file_name=st.session_state.get('audio_filename', 'superlearning_audio.mp3'),
+                mime="audio/mp3",
+                use_container_width=True
+            )
 
 st.markdown("---")
 st.caption(t("audio_format", native_lang, native_speedup, get_foreign_lang_name(foreign_lang_code), foreign_speedup, pause_duration))
