@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["ffmpeg-full", "ffmpeg"]
+packages = ["ffmpeg", "ffmpeg-full"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -38,6 +38,10 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 39837
+externalPort = 3001
 
 [[ports]]
 localPort = 40497
