@@ -476,37 +476,48 @@ with col1:
     )
 
 if uploaded_file:
-    all_sentences = []
-    needs_translation = False
-    foreign_only_texts = []
+    # Create hash of uploaded file content + language settings to detect changes
+    file_content = uploaded_file.read()
+    uploaded_file.seek(0)  # Reset file pointer for subsequent reads
+    file_hash = hashlib.md5(file_content).hexdigest()
     
-    result, message, is_foreign_only = parse_file(uploaded_file, native_lang, get_foreign_lang_name(foreign_lang_code))
+    # Combine file hash with language settings for complete cache key
+    cache_key = f"{file_hash}_{native_lang}_{foreign_lang_code}"
     
-    if result is None:
-        st.error(f"{message}")
-    else:
-        st.success(message)
+    # Check if this is a new file or language settings changed
+    is_new_upload = 'cache_key' not in st.session_state or st.session_state.cache_key != cache_key
+    
+    if is_new_upload:
+        # NEW FILE: Parse and translate
+        all_sentences = []
+        needs_translation = False
+        foreign_only_texts = []
         
-        if is_foreign_only:
-            needs_translation = True
-            foreign_only_texts.extend(result)
+        result, message, is_foreign_only = parse_file(uploaded_file, native_lang, get_foreign_lang_name(foreign_lang_code))
+        
+        if result is None:
+            st.error(f"{message}")
         else:
-            all_sentences.extend(result)
-    
-    if needs_translation and foreign_only_texts:
-        st.info(t("translating", len(foreign_only_texts), get_foreign_lang_name(foreign_lang_code), native_lang))
-        native_translations = translate_text(foreign_only_texts, get_foreign_lang_name(foreign_lang_code), native_lang)
-        translated_pairs = [[native, foreign] for native, foreign in zip(native_translations, foreign_only_texts)]
-        all_sentences.extend(translated_pairs)
-    
-    if all_sentences:
-        st.success(t("total_ready", len(all_sentences)))
+            st.success(message)
+            
+            if is_foreign_only:
+                needs_translation = True
+                foreign_only_texts.extend(result)
+            else:
+                all_sentences.extend(result)
         
-        content_hash = hashlib.md5(str(all_sentences).encode()).hexdigest()
+        if needs_translation and foreign_only_texts:
+            st.info(t("translating", len(foreign_only_texts), get_foreign_lang_name(foreign_lang_code), native_lang))
+            native_translations = translate_text(foreign_only_texts, get_foreign_lang_name(foreign_lang_code), native_lang)
+            translated_pairs = [[native, foreign] for native, foreign in zip(native_translations, foreign_only_texts)]
+            all_sentences.extend(translated_pairs)
         
-        if 'content_hash' not in st.session_state or st.session_state.content_hash != content_hash:
-            st.session_state.content_hash = content_hash
+        if all_sentences:
+            # Store new file data and cache key in session state
+            st.session_state.cache_key = cache_key
             st.session_state.current_sentences = all_sentences.copy()
+            st.success(t("total_ready", len(all_sentences)))
+            
             # Clear old edits and generated audio when new files are uploaded
             for key in list(st.session_state.keys()):
                 if isinstance(key, str) and (key.startswith('native_') or key.startswith('foreign_')):
@@ -516,7 +527,13 @@ if uploaded_file:
                 del st.session_state['generated_audio']
             if 'audio_filename' in st.session_state:
                 del st.session_state['audio_filename']
-        
+    else:
+        # SAME FILE: Just show success message, use cached data
+        if 'current_sentences' in st.session_state:
+            st.success(t("total_ready", len(st.session_state.current_sentences)))
+    
+    # Show UI for both new and existing files (if we have sentences in session state)
+    if 'current_sentences' in st.session_state and st.session_state.current_sentences:
         with st.expander(t("preview_title"), expanded=False):
             st.write(t("preview_subtitle"))
             
