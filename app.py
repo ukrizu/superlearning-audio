@@ -126,7 +126,7 @@ TRANSLATIONS = {
         "delimiter_warning": "⚠️ Používejte pouze jeden typ oddělovače na soubor",
         "format_info": "ℹ️ **DŮLEŽITÉ:** První sloupec = {} (rodný jazyk), Druhý sloupec = {} (cizí jazyk)",
         "language_warning": "⚠️ **POZOR:** Ujistěte se, že vybraný cizí jazyk v nastavení odpovídá jazyku ve druhém sloupci vašeho souboru!",
-        "upload_label": "Nahrajte soubor(y) s frázemi (.txt)",
+        "upload_label": "Nahrajte soubor s frázemi (.txt)",
         "batch_processing": "📦 Zpracování {} souborů v dávkovém režimu",
         "translating": "Překlad {} frází z jazyka {} do jazyka {}...",
         "total_ready": "✅ Celkem: {} dvojic frází připraveno",
@@ -175,7 +175,7 @@ TRANSLATIONS = {
         "delimiter_warning": "⚠️ Use only one delimiter type per file",
         "format_info": "ℹ️ **IMPORTANT:** First column = {} (native language), Second column = {} (foreign language)",
         "language_warning": "⚠️ **ATTENTION:** Make sure the selected foreign language in settings matches the language in the second column of your file!",
-        "upload_label": "Upload your phrases file(s) (.txt)",
+        "upload_label": "Upload your phrases file (.txt)",
         "batch_processing": "📦 Processing {} files in batch mode",
         "translating": "Translating {} {} phrases to {}...",
         "total_ready": "✅ Total: {} phrase pairs ready",
@@ -469,29 +469,22 @@ with col2:
     """)
 
 with col1:
-    uploaded_files = st.file_uploader(
+    uploaded_file = st.file_uploader(
         t("upload_label"), 
         type=["txt"],
-        accept_multiple_files=True
+        accept_multiple_files=False
     )
 
-if uploaded_files:
-    if len(uploaded_files) > 1:
-        st.info(t("batch_processing", len(uploaded_files)))
-    
+if uploaded_file:
     all_sentences = []
     needs_translation = False
     foreign_only_texts = []
     
-    for uploaded_file in uploaded_files:
-        st.subheader(f"📄 {uploaded_file.name}")
-        
-        result, message, is_foreign_only = parse_file(uploaded_file, native_lang, get_foreign_lang_name(foreign_lang_code))
-        
-        if result is None:
-            st.error(f"{message}")
-            continue
-        
+    result, message, is_foreign_only = parse_file(uploaded_file, native_lang, get_foreign_lang_name(foreign_lang_code))
+    
+    if result is None:
+        st.error(f"{message}")
+    else:
         st.success(message)
         
         if is_foreign_only:
