@@ -275,9 +275,9 @@ with st.sidebar:
     
     pause_duration = st.slider(
         t("pause_label"),
-        min_value=1000,
-        max_value=5000,
-        value=3200,
+        min_value=2000,
+        max_value=10000,
+        value=5000,
         step=100,
         help=t("pause_help")
     )
@@ -537,7 +537,7 @@ if uploaded_file:
         with st.expander(t("preview_title"), expanded=False):
             st.write(t("preview_subtitle"))
             
-            for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences[:20], 1):
+            for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences, 1):
                 col_a, col_b = st.columns(2)
                 with col_a:
                     st.text_input(
@@ -553,14 +553,11 @@ if uploaded_file:
                         key=f"foreign_{i}",
                         label_visibility="collapsed"
                     )
-            
-            if len(st.session_state.current_sentences) > 20:
-                st.info(t("showing_first", len(st.session_state.current_sentences)))
         
         sentences_to_use = []
         for i, (native_text, foreign_text) in enumerate(st.session_state.current_sentences, 1):
-            edited_native = st.session_state.get(f"native_{i}", native_text) if i <= 20 else native_text
-            edited_foreign = st.session_state.get(f"foreign_{i}", foreign_text) if i <= 20 else foreign_text
+            edited_native = st.session_state.get(f"native_{i}", native_text)
+            edited_foreign = st.session_state.get(f"foreign_{i}", foreign_text)
             sentences_to_use.append([edited_native, edited_foreign])
         
         # Generate text file content with edited phrases
